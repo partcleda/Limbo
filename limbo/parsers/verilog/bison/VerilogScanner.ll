@@ -104,7 +104,7 @@ assign          return token::ASSIGN;
     return token::HEX_MASK;
 }
 
-([a-zA-Z_\/]|[\\][a-zA-Z]|[\\][\.])[a-zA-Z0-9_\/\.]*  { 
+([a-zA-Z_\/]|[\\][a-zA-Z]|[\\][\.])[a-zA-Z0-9_\/\.]*(\[[0-9]+\])*  { 
     yylval->stringVal = new std::string(yytext, yyleng);
     return token::NAME;
 }
