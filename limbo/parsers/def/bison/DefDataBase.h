@@ -203,7 +203,8 @@ struct Pin : public Item
 struct Net : public Item
 {
 	string net_name; ///< net name 
-	vector< std::pair<string, string> > vNetPin; ///< array of (node, pin) pair 
+	vector< std::pair<string, string> > vNetPin; ///< array of (node, pin) pair
+	float wirelength; ///< wirelength of the net
     /// @brief reset all data members 
 	void reset()
 	{

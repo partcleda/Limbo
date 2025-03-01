@@ -104,10 +104,16 @@ assign          return token::ASSIGN;
     return token::HEX_MASK;
 }
 
-(\\?[a-zA-Z_][a-zA-Z0-9_]*)(\[[0-9]+\])*(\.[a-zA-Z_][a-zA-Z0-9_]*(\[[0-9]+\])*)*  { 
+([a-zA-Z_][a-zA-Z0-9_]*)(\[[0-9]+\])*(\.[a-zA-Z_][a-zA-Z0-9_]*(\[[0-9]+\])*)* { 
     yylval->stringVal = new std::string(yytext, yyleng);
     return token::NAME;
 }
+
+\\([^\t\n\r\f\v ]*) { 
+    yylval->stringVal = new std::string(yytext, yyleng); // Exclude trailing space
+    return token::NAME;
+}
+
 \#[0-9]+        {
                     char* end;
                     char* temp;
