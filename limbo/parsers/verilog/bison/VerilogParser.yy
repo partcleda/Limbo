@@ -106,6 +106,7 @@
 %type<rangeVal> range
 /*%type <stringArrayVal> name_array*/
 %type <generalNameArrayVal> general_name_array
+%type<generalNameArrayVal> param3
 
 %destructor {delete $$;} NAME 
 %destructor {delete $$;} range
@@ -150,21 +151,47 @@ name_array: NAME {
 
 /* general name array may have range after name */
 general_name_array: NAME {
-          $$ = new GeneralNameArray(1, GeneralName(*$1));
+          $$ = new GeneralNameArray(1, GeneralName(*$1)); // Correct type usage
           delete $1;
         }
         | NAME range {
-          $$ = new GeneralNameArray(1, GeneralName(*$1, $2->low, $2->high));
+          $$ = new GeneralNameArray(1, GeneralName(*$1, $2->low, $2->high)); // Correct type usage
           delete $1;
           delete $2; 
         }
+        | param3 {
+          $$ = $1; // Directly return the GeneralNameArray from param3
+        }
+        | param3 range {
+          for (auto& gen : *$1) { // Iterate over GeneralNameArray
+              gen.range.low = $2->low;
+              gen.range.high = $2->high;
+          }
+          $$ = $1;
+          delete $2; 
+        }
         | general_name_array ',' NAME {
-            $1->push_back(GeneralName(*$3));
+            $1->push_back(GeneralName(*$3)); // Push a GeneralName
+            delete $3;
+            $$ = $1;
+        }
+        | general_name_array ',' param3 {
+            $1->insert($1->end(), $3->begin(), $3->end()); // Merge two GeneralNameArrays
             delete $3;
             $$ = $1;
         }
         | general_name_array ',' NAME range {
-            $1->push_back(GeneralName(*$3, $4->low, $4->high));
+            $1->push_back(GeneralName(*$3, $4->low, $4->high)); // Push a GeneralName with range
+            delete $3;
+            delete $4; 
+            $$ = $1;
+        }
+        | general_name_array ',' param3 range {
+            for (auto& gen : *$3) {
+                gen.range.low = $4->low;
+                gen.range.high = $4->high;
+                $1->push_back(gen);
+            }
             delete $3;
             delete $4; 
             $$ = $1;
@@ -188,19 +215,54 @@ param2: '.' NAME '(' NAME ')' {driver.wire_pin_cbk(*$4, *$2); delete $2; delete 
       | '.' NAME '(' '{' general_name_array ',' '}' ')' {driver.wire_pin_cbk(*$5, *$2); delete $2; delete $5;} 
       ;
 
-param3: INPUT general_name_array {driver.pin_declare_cbk(*$2, kINPUT); delete $2;}
-      | INPUT range general_name_array {driver.pin_declare_cbk(*$3, kINPUT, *$2); delete $2; delete $3;} 
-      | INPUT REG range general_name_array {driver.pin_declare_cbk(*$4, kINPUT|kREG, *$3); delete $3; delete $4;}
-      | INPUT REG general_name_array {driver.pin_declare_cbk(*$3, kINPUT|kREG); delete $3;}
-      | OUTPUT general_name_array {driver.pin_declare_cbk(*$2, kOUTPUT); delete $2;}
-      | OUTPUT range general_name_array {driver.pin_declare_cbk(*$3, kOUTPUT, *$2); delete $2; delete $3;}
-      | OUTPUT REG range general_name_array {driver.pin_declare_cbk(*$4, kOUTPUT|kREG, *$3); delete $3; delete $4;}
-      | OUTPUT REG general_name_array {driver.pin_declare_cbk(*$3, kOUTPUT|kREG); delete $3;}
-      | INOUT general_name_array {driver.pin_declare_cbk(*$2, kINPUT|kOUTPUT); delete $2;}
-      | INOUT range general_name_array {driver.pin_declare_cbk(*$3, kINPUT|kOUTPUT, *$2); delete $2; delete $3;}
-      | INOUT REG range general_name_array {driver.pin_declare_cbk(*$4, kINPUT|kOUTPUT|kREG, *$3); delete $3; delete $4;}
-      | INOUT REG general_name_array {driver.pin_declare_cbk(*$3, kINPUT|kOUTPUT|kREG); delete $3;}
-      ;
+param3: INPUT general_name_array {
+          driver.pin_declare_cbk(*$2, kINPUT); // Callback function
+          $$ = $2; // Return the GeneralNameArray directly
+        }
+      | INPUT range general_name_array {
+          driver.pin_declare_cbk(*$3, kINPUT, *$2); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
+      | INPUT REG range general_name_array {
+          driver.pin_declare_cbk(*$4, kINPUT | kREG, *$3); // Callback function
+          $$ = $4; // Return the GeneralNameArray directly
+        }
+      | INPUT REG general_name_array {
+          driver.pin_declare_cbk(*$3, kINPUT | kREG); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
+      | OUTPUT general_name_array {
+          driver.pin_declare_cbk(*$2, kOUTPUT); // Callback function
+          $$ = $2; // Return the GeneralNameArray directly
+        }
+      | OUTPUT range general_name_array {
+          driver.pin_declare_cbk(*$3, kOUTPUT, *$2); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
+      | OUTPUT REG range general_name_array {
+          driver.pin_declare_cbk(*$4, kOUTPUT | kREG, *$3); // Callback function
+          $$ = $4; // Return the GeneralNameArray directly
+        }
+      | OUTPUT REG general_name_array {
+          driver.pin_declare_cbk(*$3, kOUTPUT | kREG); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
+      | INOUT general_name_array {
+          driver.pin_declare_cbk(*$2, kINPUT | kOUTPUT); // Callback function
+          $$ = $2; // Return the GeneralNameArray directly
+        }
+      | INOUT range general_name_array {
+          driver.pin_declare_cbk(*$3, kINPUT | kOUTPUT, *$2); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
+      | INOUT REG range general_name_array {
+          driver.pin_declare_cbk(*$4, kINPUT | kOUTPUT | kREG, *$3); // Callback function
+          $$ = $4; // Return the GeneralNameArray directly
+        }
+      | INOUT REG general_name_array {
+          driver.pin_declare_cbk(*$3, kINPUT | kOUTPUT | kREG); // Callback function
+          $$ = $3; // Return the GeneralNameArray directly
+        }
 
 param4: REG general_name_array {delete $2;}
       | REG range general_name_array {delete $2; delete $3;}
@@ -209,6 +271,7 @@ param4: REG general_name_array {delete $2;}
 param5: WIRE general_name_array {driver.wire_declare_cbk(*$2); delete $2;}
       | WIRE range general_name_array {driver.wire_declare_cbk(*$3, *$2); delete $2; delete $3;}
       ;
+
 
 /*
 module_param: param1 
