@@ -84,15 +84,20 @@
 ///\file
 ///\brief Mersenne Twister random number generator
 
-namespace lemon {
+namespace lemon
+{
 
-  namespace _random_bits {
+  namespace _random_bits
+  {
 
     template <typename _Word, int _bits = std::numeric_limits<_Word>::digits>
-    struct RandomTraits {};
+    struct RandomTraits
+    {
+    };
 
     template <typename _Word>
-    struct RandomTraits<_Word, 32> {
+    struct RandomTraits<_Word, 32>
+    {
 
       typedef _Word Word;
       static const int bits = 32;
@@ -109,19 +114,19 @@ namespace lemon {
       static const Word loMask = (1u << 31) - 1;
       static const Word hiMask = ~loMask;
 
-
-      static Word tempering(Word rnd) {
+      static Word tempering(Word rnd)
+      {
         rnd ^= (rnd >> 11);
         rnd ^= (rnd << 7) & 0x9D2C5680u;
         rnd ^= (rnd << 15) & 0xEFC60000u;
         rnd ^= (rnd >> 18);
         return rnd;
       }
-
     };
 
     template <typename _Word>
-    struct RandomTraits<_Word, 64> {
+    struct RandomTraits<_Word, 64>
+    {
 
       typedef _Word Word;
       static const int bits = 64;
@@ -130,96 +135,109 @@ namespace lemon {
       static const int shift = 156;
 
       static const Word mul = Word(0x5851F42Du) << 32 | Word(0x4C957F2Du);
-      static const Word arrayInit = Word(0x00000000u) << 32 |Word(0x012BD6AAu);
-      static const Word arrayMul1 = Word(0x369DEA0Fu) << 32 |Word(0x31A53F85u);
-      static const Word arrayMul2 = Word(0x27BB2EE6u) << 32 |Word(0x87B0B0FDu);
+      static const Word arrayInit = Word(0x00000000u) << 32 | Word(0x012BD6AAu);
+      static const Word arrayMul1 = Word(0x369DEA0Fu) << 32 | Word(0x31A53F85u);
+      static const Word arrayMul2 = Word(0x27BB2EE6u) << 32 | Word(0x87B0B0FDu);
 
       static const Word mask = Word(0xB5026F5Au) << 32 | Word(0xA96619E9u);
       static const Word loMask = (Word(1u) << 31) - 1;
       static const Word hiMask = ~loMask;
 
-      static Word tempering(Word rnd) {
+      static Word tempering(Word rnd)
+      {
         rnd ^= (rnd >> 29) & (Word(0x55555555u) << 32 | Word(0x55555555u));
         rnd ^= (rnd << 17) & (Word(0x71D67FFFu) << 32 | Word(0xEDA60000u));
         rnd ^= (rnd << 37) & (Word(0xFFF7EEE0u) << 32 | Word(0x00000000u));
         rnd ^= (rnd >> 43);
         return rnd;
       }
-
     };
 
     template <typename _Word>
-    class RandomCore {
+    class RandomCore
+    {
     public:
-
       typedef _Word Word;
 
     private:
-
       static const int bits = RandomTraits<Word>::bits;
 
       static const int length = RandomTraits<Word>::length;
       static const int shift = RandomTraits<Word>::shift;
 
     public:
-
-      void initState() {
+      void initState()
+      {
         static const Word seedArray[4] = {
-          0x12345u, 0x23456u, 0x34567u, 0x45678u
-        };
+            0x12345u, 0x23456u, 0x34567u, 0x45678u};
 
         initState(seedArray, seedArray + 4);
       }
 
-      void initState(Word seed) {
+      void initState(Word seed)
+      {
 
         static const Word mul = RandomTraits<Word>::mul;
 
         current = state;
 
         Word *curr = state + length - 1;
-        curr[0] = seed; --curr;
-        for (int i = 1; i < length; ++i) {
-          curr[0] = (mul * ( curr[1] ^ (curr[1] >> (bits - 2)) ) + i);
+        curr[0] = seed;
+        --curr;
+        for (int i = 1; i < length; ++i)
+        {
+          curr[0] = (mul * (curr[1] ^ (curr[1] >> (bits - 2))) + i);
           --curr;
         }
       }
 
       template <typename Iterator>
-      void initState(Iterator begin, Iterator end) {
+      void initState(Iterator begin, Iterator end)
+      {
 
         static const Word init = RandomTraits<Word>::arrayInit;
         static const Word mul1 = RandomTraits<Word>::arrayMul1;
         static const Word mul2 = RandomTraits<Word>::arrayMul2;
 
-
-        Word *curr = state + length - 1; --curr;
-        Iterator it = begin; int cnt = 0;
+        Word *curr = state + length - 1;
+        --curr;
+        Iterator it = begin;
+        int cnt = 0;
         int num;
 
         initState(init);
 
         num = length > end - begin ? length : end - begin;
-        while (num--) {
-          curr[0] = (curr[0] ^ ((curr[1] ^ (curr[1] >> (bits - 2))) * mul1))
-            + *it + cnt;
-          ++it; ++cnt;
-          if (it == end) {
-            it = begin; cnt = 0;
+        while (num--)
+        {
+          curr[0] = (curr[0] ^ ((curr[1] ^ (curr[1] >> (bits - 2))) * mul1)) + *it + cnt;
+          ++it;
+          ++cnt;
+          if (it == end)
+          {
+            it = begin;
+            cnt = 0;
           }
-          if (curr == state) {
-            curr = state + length - 1; curr[0] = state[0];
+          if (curr == state)
+          {
+            curr = state + length - 1;
+            curr[0] = state[0];
           }
           --curr;
         }
 
-        num = length - 1; cnt = length - (curr - state) - 1;
-        while (num--) {
-          curr[0] = (curr[0] ^ ((curr[1] ^ (curr[1] >> (bits - 2))) * mul2))
-            - cnt;
-          --curr; ++cnt;
-          if (curr == state) {
-            curr = state + length - 1; curr[0] = state[0]; --curr;
+        num = length - 1;
+        cnt = length - (curr - state) - 1;
+        while (num--)
+        {
+          curr[0] = (curr[0] ^ ((curr[1] ^ (curr[1] >> (bits - 2))) * mul2)) - cnt;
+          --curr;
+          ++cnt;
+          if (curr == state)
+          {
+            curr = state + length - 1;
+            curr[0] = state[0];
+            --curr;
             cnt = 1;
           }
         }
@@ -227,67 +245,71 @@ namespace lemon {
         state[length - 1] = Word(1) << (bits - 1);
       }
 
-      void copyState(const RandomCore& other) {
+      void copyState(const RandomCore &other)
+      {
         std::copy(other.state, other.state + length, state);
         current = state + (other.current - other.state);
       }
 
-      Word operator()() {
-        if (current == state) fillState();
+      Word operator()()
+      {
+        if (current == state)
+          fillState();
         --current;
         Word rnd = *current;
         return RandomTraits<Word>::tempering(rnd);
       }
 
     private:
-
-
-      void fillState() {
-        static const Word mask[2] = { 0x0ul, RandomTraits<Word>::mask };
+      void fillState()
+      {
+        static const Word mask[2] = {0x0ul, RandomTraits<Word>::mask};
         static const Word loMask = RandomTraits<Word>::loMask;
         static const Word hiMask = RandomTraits<Word>::hiMask;
 
         current = state + length;
 
-        register Word *curr = state + length - 1;
-        register long num;
+        Word *curr = state + length - 1;
+        long num;
 
         num = length - shift;
-        while (num--) {
+        while (num--)
+        {
           curr[0] = (((curr[0] & hiMask) | (curr[-1] & loMask)) >> 1) ^
-            curr[- shift] ^ mask[curr[-1] & 1ul];
+                    curr[-shift] ^ mask[curr[-1] & 1ul];
           --curr;
         }
         num = shift - 1;
-        while (num--) {
+        while (num--)
+        {
           curr[0] = (((curr[0] & hiMask) | (curr[-1] & loMask)) >> 1) ^
-            curr[length - shift] ^ mask[curr[-1] & 1ul];
+                    curr[length - shift] ^ mask[curr[-1] & 1ul];
           --curr;
         }
         state[0] = (((state[0] & hiMask) | (curr[length - 1] & loMask)) >> 1) ^
-          curr[length - shift] ^ mask[curr[length - 1] & 1ul];
-
+                   curr[length - shift] ^ mask[curr[length - 1] & 1ul];
       }
-
 
       Word *current;
       Word state[length];
-
     };
-
 
     template <typename Result,
               int shift = (std::numeric_limits<Result>::digits + 1) / 2>
-    struct Masker {
-      static Result mask(const Result& result) {
+    struct Masker
+    {
+      static Result mask(const Result &result)
+      {
         return Masker<Result, (shift + 1) / 2>::
-          mask(static_cast<Result>(result | (result >> shift)));
+            mask(static_cast<Result>(result | (result >> shift)));
       }
     };
 
     template <typename Result>
-    struct Masker<Result, 1> {
-      static Result mask(const Result& result) {
+    struct Masker<Result, 1>
+    {
+      static Result mask(const Result &result)
+      {
         return static_cast<Result>(result | (result >> 1));
       }
     };
@@ -295,35 +317,40 @@ namespace lemon {
     template <typename Result, typename Word,
               int rest = std::numeric_limits<Result>::digits, int shift = 0,
               bool last = rest <= std::numeric_limits<Word>::digits>
-    struct IntConversion {
+    struct IntConversion
+    {
       static const int bits = std::numeric_limits<Word>::digits;
 
-      static Result convert(RandomCore<Word>& rnd) {
+      static Result convert(RandomCore<Word> &rnd)
+      {
         return static_cast<Result>(rnd() >> (bits - rest)) << shift;
       }
-
     };
 
     template <typename Result, typename Word, int rest, int shift>
-    struct IntConversion<Result, Word, rest, shift, false> {
+    struct IntConversion<Result, Word, rest, shift, false>
+    {
       static const int bits = std::numeric_limits<Word>::digits;
 
-      static Result convert(RandomCore<Word>& rnd) {
+      static Result convert(RandomCore<Word> &rnd)
+      {
         return (static_cast<Result>(rnd()) << shift) |
-          IntConversion<Result, Word, rest - bits, shift + bits>::convert(rnd);
+               IntConversion<Result, Word, rest - bits, shift + bits>::convert(rnd);
       }
     };
 
-
     template <typename Result, typename Word,
               bool one_word = (std::numeric_limits<Word>::digits <
-                               std::numeric_limits<Result>::digits) >
-    struct Mapping {
-      static Result map(RandomCore<Word>& rnd, const Result& bound) {
+                               std::numeric_limits<Result>::digits)>
+    struct Mapping
+    {
+      static Result map(RandomCore<Word> &rnd, const Result &bound)
+      {
         Word max = Word(bound - 1);
         Result mask = Masker<Result>::mask(bound - 1);
         Result num;
-        do {
+        do
+        {
           num = IntConversion<Result, Word>::convert(rnd) & mask;
         } while (num > max);
         return num;
@@ -331,13 +358,15 @@ namespace lemon {
     };
 
     template <typename Result, typename Word>
-    struct Mapping<Result, Word, false> {
-      static Result map(RandomCore<Word>& rnd, const Result& bound) {
+    struct Mapping<Result, Word, false>
+    {
+      static Result map(RandomCore<Word> &rnd, const Result &bound)
+      {
         Word max = Word(bound - 1);
-        Word mask = Masker<Word, (std::numeric_limits<Result>::digits + 1) / 2>
-          ::mask(max);
+        Word mask = Masker<Word, (std::numeric_limits<Result>::digits + 1) / 2>::mask(max);
         Word num;
-        do {
+        do
+        {
           num = rnd() & mask;
         } while (num > max);
         return num;
@@ -345,53 +374,68 @@ namespace lemon {
     };
 
     template <typename Result, int exp>
-    struct ShiftMultiplier {
-      static const Result multiplier() {
+    struct ShiftMultiplier
+    {
+      static const Result multiplier()
+      {
         Result res = ShiftMultiplier<Result, exp / 2>::multiplier();
         res *= res;
-        if ((exp & 1) == 1) res *= static_cast<Result>(0.5);
+        if ((exp & 1) == 1)
+          res *= static_cast<Result>(0.5);
         return res;
       }
     };
 
     template <typename Result>
-    struct ShiftMultiplier<Result, 0> {
-      static const Result multiplier() {
+    struct ShiftMultiplier<Result, 0>
+    {
+      static const Result multiplier()
+      {
         return static_cast<Result>(1.0);
       }
     };
 
     template <typename Result>
-    struct ShiftMultiplier<Result, 20> {
-      static const Result multiplier() {
-        return static_cast<Result>(1.0/1048576.0);
+    struct ShiftMultiplier<Result, 20>
+    {
+      static const Result multiplier()
+      {
+        return static_cast<Result>(1.0 / 1048576.0);
       }
     };
 
     template <typename Result>
-    struct ShiftMultiplier<Result, 32> {
-      static const Result multiplier() {
-        return static_cast<Result>(1.0/4294967296.0);
+    struct ShiftMultiplier<Result, 32>
+    {
+      static const Result multiplier()
+      {
+        return static_cast<Result>(1.0 / 4294967296.0);
       }
     };
 
     template <typename Result>
-    struct ShiftMultiplier<Result, 53> {
-      static const Result multiplier() {
-        return static_cast<Result>(1.0/9007199254740992.0);
+    struct ShiftMultiplier<Result, 53>
+    {
+      static const Result multiplier()
+      {
+        return static_cast<Result>(1.0 / 9007199254740992.0);
       }
     };
 
     template <typename Result>
-    struct ShiftMultiplier<Result, 64> {
-      static const Result multiplier() {
-        return static_cast<Result>(1.0/18446744073709551616.0);
+    struct ShiftMultiplier<Result, 64>
+    {
+      static const Result multiplier()
+      {
+        return static_cast<Result>(1.0 / 18446744073709551616.0);
       }
     };
 
     template <typename Result, int exp>
-    struct Shifting {
-      static Result shift(const Result& result) {
+    struct Shifting
+    {
+      static Result shift(const Result &result)
+      {
         return result * ShiftMultiplier<Result, exp>::multiplier();
       }
     };
@@ -399,60 +443,73 @@ namespace lemon {
     template <typename Result, typename Word,
               int rest = std::numeric_limits<Result>::digits, int shift = 0,
               bool last = rest <= std::numeric_limits<Word>::digits>
-    struct RealConversion{
+    struct RealConversion
+    {
       static const int bits = std::numeric_limits<Word>::digits;
 
-      static Result convert(RandomCore<Word>& rnd) {
+      static Result convert(RandomCore<Word> &rnd)
+      {
         return Shifting<Result, shift + rest>::
-          shift(static_cast<Result>(rnd() >> (bits - rest)));
+            shift(static_cast<Result>(rnd() >> (bits - rest)));
       }
     };
 
     template <typename Result, typename Word, int rest, int shift>
-    struct RealConversion<Result, Word, rest, shift, false> {
+    struct RealConversion<Result, Word, rest, shift, false>
+    {
       static const int bits = std::numeric_limits<Word>::digits;
 
-      static Result convert(RandomCore<Word>& rnd) {
+      static Result convert(RandomCore<Word> &rnd)
+      {
         return Shifting<Result, shift + bits>::
-          shift(static_cast<Result>(rnd())) +
-          RealConversion<Result, Word, rest-bits, shift + bits>::
-          convert(rnd);
+                   shift(static_cast<Result>(rnd())) +
+               RealConversion<Result, Word, rest - bits, shift + bits>::
+                   convert(rnd);
       }
     };
 
     template <typename Result, typename Word>
-    struct Initializer {
+    struct Initializer
+    {
 
       template <typename Iterator>
-      static void init(RandomCore<Word>& rnd, Iterator begin, Iterator end) {
+      static void init(RandomCore<Word> &rnd, Iterator begin, Iterator end)
+      {
         std::vector<Word> ws;
-        for (Iterator it = begin; it != end; ++it) {
+        for (Iterator it = begin; it != end; ++it)
+        {
           ws.push_back(Word(*it));
         }
         rnd.initState(ws.begin(), ws.end());
       }
 
-      static void init(RandomCore<Word>& rnd, Result seed) {
+      static void init(RandomCore<Word> &rnd, Result seed)
+      {
         rnd.initState(seed);
       }
     };
 
     template <typename Word>
-    struct BoolConversion {
-      static bool convert(RandomCore<Word>& rnd) {
+    struct BoolConversion
+    {
+      static bool convert(RandomCore<Word> &rnd)
+      {
         return (rnd() & 1) == 1;
       }
     };
 
     template <typename Word>
-    struct BoolProducer {
+    struct BoolProducer
+    {
       Word buffer;
       int num;
 
       BoolProducer() : num(0) {}
 
-      bool convert(RandomCore<Word>& rnd) {
-        if (num == 0) {
+      bool convert(RandomCore<Word> &rnd)
+      {
+        if (num == 0)
+        {
           buffer = rnd();
           num = RandomTraits<Word>::bits;
         }
@@ -514,18 +571,16 @@ namespace lemon {
   /// generator which name is \ref lemon::rnd "rnd". Usually it is a
   /// good programming convenience to use this global generator to get
   /// random numbers.
-  class Random {
+  class Random
+  {
   private:
-
     // Architecture word
     typedef unsigned long Word;
 
     _random_bits::RandomCore<Word> core;
     _random_bits::BoolProducer<Word> bool_producer;
 
-
   public:
-
     ///\name Initialization
     ///
     /// @{
@@ -540,7 +595,8 @@ namespace lemon {
     /// Constructor with seed. The current number type will be converted
     /// to the architecture word type.
     template <typename Number>
-    Random(Number seed) {
+    Random(Number seed)
+    {
       _random_bits::Initializer<Number, Word>::init(core, seed);
     }
 
@@ -550,7 +606,8 @@ namespace lemon {
     /// any number type and the numbers will be converted to the
     /// architecture word type.
     template <typename Iterator>
-    Random(Iterator begin, Iterator end) {
+    Random(Iterator begin, Iterator end)
+    {
       typedef typename std::iterator_traits<Iterator>::value_type Number;
       _random_bits::Initializer<Number, Word>::init(core, begin, end);
     }
@@ -561,7 +618,8 @@ namespace lemon {
     /// the other sequence. It can be used to save the current state
     /// of the generator and later use it to generate the same
     /// sequence.
-    Random(const Random& other) {
+    Random(const Random &other)
+    {
       core.copyState(other.core);
     }
 
@@ -571,8 +629,10 @@ namespace lemon {
     /// the other sequence. It can be used to save the current state
     /// of the generator and later use it to generate the same
     /// sequence.
-    Random& operator=(const Random& other) {
-      if (&other != this) {
+    Random &operator=(const Random &other)
+    {
+      if (&other != this)
+      {
         core.copyState(other.core);
       }
       return *this;
@@ -583,7 +643,8 @@ namespace lemon {
     /// Seeding the random sequence. The current number type will be
     /// converted to the architecture word type.
     template <typename Number>
-    void seed(Number seed) {
+    void seed(Number seed)
+    {
       _random_bits::Initializer<Number, Word>::init(core, seed);
     }
 
@@ -593,7 +654,8 @@ namespace lemon {
     /// any number type and the numbers will be converted to the
     /// architecture word type.
     template <typename Iterator>
-    void seed(Iterator begin, Iterator end) {
+    void seed(Iterator begin, Iterator end)
+    {
       typedef typename std::iterator_traits<Iterator>::value_type Number;
       _random_bits::Initializer<Number, Word>::init(core, begin, end);
     }
@@ -604,11 +666,14 @@ namespace lemon {
     /// function with the <tt>/dev/urandom</tt> file. If it does not success,
     /// it uses the \c seedFromTime().
     /// \return Currently always \c true.
-    bool seed() {
+    bool seed()
+    {
 #ifndef WIN32
-      if (seedFromFile("/dev/urandom", 0)) return true;
+      if (seedFromFile("/dev/urandom", 0))
+        return true;
 #endif
-      if (seedFromTime()) return true;
+      if (seedFromTime())
+        return true;
       return false;
     }
 
@@ -626,16 +691,18 @@ namespace lemon {
     /// \param offset The offset, from the file read.
     /// \return \c true when the seeding successes.
 #ifndef WIN32
-    bool seedFromFile(const std::string& file = "/dev/urandom", int offset = 0)
+    bool seedFromFile(const std::string &file = "/dev/urandom", int offset = 0)
 #else
-    bool seedFromFile(const std::string& file = "", int offset = 0)
+    bool seedFromFile(const std::string &file = "", int offset = 0)
 #endif
     {
       std::ifstream rs(file.c_str());
       const int size = 4;
       Word buf[size];
-      if (offset != 0 && !rs.seekg(offset)) return false;
-      if (!rs.read(reinterpret_cast<char*>(buf), sizeof(buf))) return false;
+      if (offset != 0 && !rs.seekg(offset))
+        return false;
+      if (!rs.read(reinterpret_cast<char *>(buf), sizeof(buf)))
+        return false;
       seed(buf, buf + size);
       return true;
     }
@@ -646,7 +713,8 @@ namespace lemon {
     /// current process id and the current time for initialize the
     /// random sequence.
     /// \return Currently always \c true.
-    bool seedFromTime() {
+    bool seedFromTime()
+    {
 #ifndef WIN32
       timeval tv;
       gettimeofday(&tv, 0);
@@ -668,32 +736,37 @@ namespace lemon {
     /// It returns a random real number from the range [0, 1). The
     /// default Number type is \c double.
     template <typename Number>
-    Number real() {
+    Number real()
+    {
       return _random_bits::RealConversion<Number, Word>::convert(core);
     }
 
-    double real() {
+    double real()
+    {
       return real<double>();
     }
 
     /// \brief Returns a random real number from the range [0, 1)
     ///
     /// It returns a random double from the range [0, 1).
-    double operator()() {
+    double operator()()
+    {
       return real<double>();
     }
 
     /// \brief Returns a random real number from the range [0, b)
     ///
     /// It returns a random real number from the range [0, b).
-    double operator()(double b) {
+    double operator()(double b)
+    {
       return real<double>() * b;
     }
 
     /// \brief Returns a random real number from the range [a, b)
     ///
     /// It returns a random real number from the range [a, b).
-    double operator()(double a, double b) {
+    double operator()(double a, double b)
+    {
       return real<double>() * (b - a) + a;
     }
 
@@ -701,7 +774,8 @@ namespace lemon {
     ///
     /// It returns a random integer from the range {0, 1, ..., b - 1}.
     template <typename Number>
-    Number integer(Number b) {
+    Number integer(Number b)
+    {
       return _random_bits::Mapping<Number, Word>::map(core, b);
     }
 
@@ -709,7 +783,8 @@ namespace lemon {
     ///
     /// It returns a random integer from the range {a, a + 1, ..., b - 1}.
     template <typename Number>
-    Number integer(Number a, Number b) {
+    Number integer(Number a, Number b)
+    {
       return _random_bits::Mapping<Number, Word>::map(core, b - a) + a;
     }
 
@@ -717,7 +792,8 @@ namespace lemon {
     ///
     /// It returns a random integer from the range {0, 1, ..., b - 1}.
     template <typename Number>
-    Number operator[](Number b) {
+    Number operator[](Number b)
+    {
       return _random_bits::Mapping<Number, Word>::map(core, b);
     }
 
@@ -727,11 +803,13 @@ namespace lemon {
     /// whole range of the current \c Number type. The default result
     /// type of this function is <tt>unsigned int</tt>.
     template <typename Number>
-    Number uinteger() {
+    Number uinteger()
+    {
       return _random_bits::IntConversion<Number, Word>::convert(core);
     }
 
-    unsigned int uinteger() {
+    unsigned int uinteger()
+    {
       return uinteger<unsigned int>();
     }
 
@@ -741,13 +819,15 @@ namespace lemon {
     /// the current \c Number type. The default result type of this
     /// function is \c int.
     template <typename Number>
-    Number integer() {
+    Number integer()
+    {
       static const int nb = std::numeric_limits<Number>::digits +
-        (std::numeric_limits<Number>::is_signed ? 1 : 0);
+                            (std::numeric_limits<Number>::is_signed ? 1 : 0);
       return _random_bits::IntConversion<Number, Word, nb>::convert(core);
     }
 
-    int integer() {
+    int integer()
+    {
       return integer<int>();
     }
 
@@ -756,7 +836,8 @@ namespace lemon {
     /// It returns a random bool. The generator holds a buffer for
     /// random bits. Every time when it become empty the generator makes
     /// a new random word and fill the buffer up.
-    bool boolean() {
+    bool boolean()
+    {
       return bool_producer.convert(core);
     }
 
@@ -769,7 +850,8 @@ namespace lemon {
     /// \brief Returns a random bool with given probability of true result.
     ///
     /// It returns a random bool with given probability of true result.
-    bool boolean(double p) {
+    bool boolean(double p)
+    {
       return operator()() < p;
     }
 
@@ -780,21 +862,22 @@ namespace lemon {
     /// transformation is used to generate a random normal distribution.
     double gauss()
     {
-      double V1,V2,S;
-      do {
-        V1=2*real<double>()-1;
-        V2=2*real<double>()-1;
-        S=V1*V1+V2*V2;
-      } while(S>=1);
-      return std::sqrt(-2*std::log(S)/S)*V1;
+      double V1, V2, S;
+      do
+      {
+        V1 = 2 * real<double>() - 1;
+        V2 = 2 * real<double>() - 1;
+        S = V1 * V1 + V2 * V2;
+      } while (S >= 1);
+      return std::sqrt(-2 * std::log(S) / S) * V1;
     }
     /// Normal (Gauss) distribution with given mean and standard deviation
 
     /// Normal (Gauss) distribution with given mean and standard deviation.
     /// \sa gauss()
-    double gauss(double mean,double std_dev)
+    double gauss(double mean, double std_dev)
     {
-      return gauss()*std_dev+mean;
+      return gauss() * std_dev + mean;
     }
 
     /// Lognormal distribution
@@ -802,39 +885,39 @@ namespace lemon {
     /// Lognormal distribution. The parameters are the mean and the standard
     /// deviation of <tt>exp(X)</tt>.
     ///
-    double lognormal(double n_mean,double n_std_dev)
+    double lognormal(double n_mean, double n_std_dev)
     {
-      return std::exp(gauss(n_mean,n_std_dev));
+      return std::exp(gauss(n_mean, n_std_dev));
     }
     /// Lognormal distribution
 
     /// Lognormal distribution. The parameter is an <tt>std::pair</tt> of
     /// the mean and the standard deviation of <tt>exp(X)</tt>.
     ///
-    double lognormal(const std::pair<double,double> &params)
+    double lognormal(const std::pair<double, double> &params)
     {
-      return std::exp(gauss(params.first,params.second));
+      return std::exp(gauss(params.first, params.second));
     }
     /// Compute the lognormal parameters from mean and standard deviation
 
     /// This function computes the lognormal parameters from mean and
     /// standard deviation. The return value can direcly be passed to
     /// lognormal().
-    std::pair<double,double> lognormalParamsFromMD(double mean,
-                                                   double std_dev)
+    std::pair<double, double> lognormalParamsFromMD(double mean,
+                                                    double std_dev)
     {
-      double fr=std_dev/mean;
-      fr*=fr;
-      double lg=std::log(1+fr);
-      return std::pair<double,double>(std::log(mean)-lg/2.0,std::sqrt(lg));
+      double fr = std_dev / mean;
+      fr *= fr;
+      double lg = std::log(1 + fr);
+      return std::pair<double, double>(std::log(mean) - lg / 2.0, std::sqrt(lg));
     }
     /// Lognormal distribution with given mean and standard deviation
 
     /// Lognormal distribution with given mean and standard deviation.
     ///
-    double lognormalMD(double mean,double std_dev)
+    double lognormalMD(double mean, double std_dev)
     {
-      return lognormal(lognormalParamsFromMD(mean,std_dev));
+      return lognormal(lognormalParamsFromMD(mean, std_dev));
     }
 
     /// Exponential distribution with given mean
@@ -842,9 +925,9 @@ namespace lemon {
     /// This function generates an exponential distribution random number
     /// with mean <tt>1/lambda</tt>.
     ///
-    double exponential(double lambda=1.0)
+    double exponential(double lambda = 1.0)
     {
-      return -std::log(1.0-real<double>())/lambda;
+      return -std::log(1.0 - real<double>()) / lambda;
     }
 
     /// Gamma distribution with given integer shape
@@ -855,7 +938,8 @@ namespace lemon {
     double gamma(int k)
     {
       double s = 0;
-      for(int i=0;i<k;i++) s-=std::log(1.0-real<double>());
+      for (int i = 0; i < k; i++)
+        s -= std::log(1.0 - real<double>());
       return s;
     }
 
@@ -866,27 +950,28 @@ namespace lemon {
     ///\param k shape parameter (<tt>k>0</tt>)
     ///\param theta scale parameter
     ///
-    double gamma(double k,double theta=1.0)
+    double gamma(double k, double theta = 1.0)
     {
-      double xi,nu;
-      const double delta = k-std::floor(k);
-      const double v0=E/(E-delta);
-      do {
-        double V0=1.0-real<double>();
-        double V1=1.0-real<double>();
-        double V2=1.0-real<double>();
-        if(V2<=v0)
-          {
-            xi=std::pow(V1,1.0/delta);
-            nu=V0*std::pow(xi,delta-1.0);
-          }
+      double xi, nu;
+      const double delta = k - std::floor(k);
+      const double v0 = E / (E - delta);
+      do
+      {
+        double V0 = 1.0 - real<double>();
+        double V1 = 1.0 - real<double>();
+        double V2 = 1.0 - real<double>();
+        if (V2 <= v0)
+        {
+          xi = std::pow(V1, 1.0 / delta);
+          nu = V0 * std::pow(xi, delta - 1.0);
+        }
         else
-          {
-            xi=1.0-std::log(V1);
-            nu=V0*std::exp(-xi);
-          }
-      } while(nu>std::pow(xi,delta-1.0)*std::exp(-xi));
-      return theta*(xi+gamma(int(std::floor(k))));
+        {
+          xi = 1.0 - std::log(V1);
+          nu = V0 * std::exp(-xi);
+        }
+      } while (nu > std::pow(xi, delta - 1.0) * std::exp(-xi));
+      return theta * (xi + gamma(int(std::floor(k))));
     }
 
     /// Weibull distribution
@@ -896,9 +981,9 @@ namespace lemon {
     ///\param k shape parameter (<tt>k>0</tt>)
     ///\param lambda scale parameter (<tt>lambda>0</tt>)
     ///
-    double weibull(double k,double lambda)
+    double weibull(double k, double lambda)
     {
-      return lambda*pow(-std::log(1.0-real<double>()),1.0/k);
+      return lambda * pow(-std::log(1.0 - real<double>()), 1.0 / k);
     }
 
     /// Pareto distribution
@@ -908,9 +993,9 @@ namespace lemon {
     ///\param k shape parameter (<tt>k>0</tt>)
     ///\param x_min location parameter (<tt>x_min>0</tt>)
     ///
-    double pareto(double k,double x_min)
+    double pareto(double k, double x_min)
     {
-      return exponential(gamma(k,1.0/x_min))+x_min;
+      return exponential(gamma(k, 1.0 / x_min)) + x_min;
     }
 
     /// Poisson distribution
@@ -927,13 +1012,14 @@ namespace lemon {
     int poisson(double lambda)
     {
       const double l = std::exp(-lambda);
-      int k=0;
+      int k = 0;
       double p = 1.0;
-      do {
+      do
+      {
         k++;
-        p*=real<double>();
-      } while (p>=l);
-      return k-1;
+        p *= real<double>();
+      } while (p >= l);
+      return k - 1;
     }
 
     ///@}
@@ -948,13 +1034,14 @@ namespace lemon {
     ///
     dim2::Point<double> disc()
     {
-      double V1,V2;
-      do {
-        V1=2*real<double>()-1;
-        V2=2*real<double>()-1;
+      double V1, V2;
+      do
+      {
+        V1 = 2 * real<double>() - 1;
+        V2 = 2 * real<double>() - 1;
 
-      } while(V1*V1+V2*V2>=1);
-      return dim2::Point<double>(V1,V2);
+      } while (V1 * V1 + V2 * V2 >= 1);
+      return dim2::Point<double>(V1, V2);
     }
     /// A kind of two dimensional normal (Gauss) distribution
 
@@ -966,14 +1053,15 @@ namespace lemon {
     /// the Box-Muller method.
     dim2::Point<double> gauss2()
     {
-      double V1,V2,S;
-      do {
-        V1=2*real<double>()-1;
-        V2=2*real<double>()-1;
-        S=V1*V1+V2*V2;
-      } while(S>=1);
-      double W=std::sqrt(-2*std::log(S)/S);
-      return dim2::Point<double>(W*V1,W*V2);
+      double V1, V2, S;
+      do
+      {
+        V1 = 2 * real<double>() - 1;
+        V2 = 2 * real<double>() - 1;
+        S = V1 * V1 + V2 * V2;
+      } while (S >= 1);
+      double W = std::sqrt(-2 * std::log(S) / S);
+      return dim2::Point<double>(W * V1, W * V2);
     }
     /// A kind of two dimensional exponential distribution
 
@@ -984,19 +1072,19 @@ namespace lemon {
     /// y-coordinate.
     dim2::Point<double> exponential2()
     {
-      double V1,V2,S;
-      do {
-        V1=2*real<double>()-1;
-        V2=2*real<double>()-1;
-        S=V1*V1+V2*V2;
-      } while(S>=1);
-      double W=-std::log(S)/S;
-      return dim2::Point<double>(W*V1,W*V2);
+      double V1, V2, S;
+      do
+      {
+        V1 = 2 * real<double>() - 1;
+        V2 = 2 * real<double>() - 1;
+        S = V1 * V1 + V2 * V2;
+      } while (S >= 1);
+      double W = -std::log(S) / S;
+      return dim2::Point<double>(W * V1, W * V2);
     }
 
     ///@}
   };
-
 
   extern Random rnd;
 
